@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,63 +12,80 @@ namespace RenameFiles
     {
         static void Main(string[] args)
         {
-            string filePath, filePart, fileNewPart;
+            string input = "";
+            string output = "";
+            Manager objManager = new Manager();
 
             while (true)
             {
+                RenameFile objFile = new RenameFile();
 
-                Console.WriteLine("Informe o caminho dos arquivos : ");
-                filePath = Console.ReadLine();
-                Console.WriteLine("Informe o trecho a ser renomeado : ");
-                filePart = Console.ReadLine();
-                Console.WriteLine("Informe com o que quer renomear : ");
-                fileNewPart = Console.ReadLine();
-
-                Console.WriteLine("Tem certeza que deseja renomear? Y/N");
-                string input = Console.ReadLine().ToLower();
-
-                if (input == "y")
+                while (!Manager.ReadInput(input, RenameFile.InputStep.Path))
                 {
-                    Rename(filePath, filePart, fileNewPart);
+                    Console.WriteLine("Informe o caminho dos arquivos: ");
+                    input = Console.ReadLine();
                 }
-                else if (input == "quit")
-                {
-                    break;
-                }
-                else if (input == "n")
-                {
-                    Console.Clear();
-                }
-            }
-        }
 
-        public static void Rename(string path, string part, string newpart)
-        {
-            try
-            {
-                DirectoryInfo dirInfo = new DirectoryInfo(@path);
-                FileInfo[] files = dirInfo.GetFiles();
-                string oldName, newName;
-                int fileAffect = 0;
-                for (int i = 0; i < files.Length; i++)
+                objFile.FilePath = input;
+
+                do
                 {
-                    if (files[i].Name.Contains(part))
+                    Console.WriteLine("Informe o trecho a ser renomeado : ");
+                    input = Console.ReadLine();
+                } while (!Manager.ReadInput(input, RenameFile.InputStep.Part));
+
+                objFile.FilePart = input;
+
+                do
+                {
+                    Console.WriteLine("Informe com o que quer renomear : ");
+                    input = Console.ReadLine();
+                } while (!Manager.ReadInput(input, RenameFile.InputStep.NewPart));
+
+                objFile.FileNewPart = input;
+
+                do
+                {
+                    Console.WriteLine("Tem certeza que deseja renomear? Y/N");
+                    input = Console.ReadLine().ToLower();
+                } while (!Manager.ReadInput(input));
+
+                try
+                {
+                    switch (input)
                     {
-                        oldName = @path + "\\" + files[i].Name;
-                        newName = @path + "\\" + files[i].Name.Replace(part, newpart);
-
-                        File.Move(oldName, newName);
-
-                        fileAffect++;
+                        case "y":
+                            int filesAffect = objManager.RenameIt(objFile);
+                            if (filesAffect > 0)
+                                output = filesAffect + " arquivos(s) foram renomeados";
+                            else
+                                output = "Nenhuma arquivo foi renomeado";
+                            break;
+                        case "quit":
+                            Environment.Exit(0);
+                            break;
+                        case "n":
+                            Console.Clear();
+                            break;
+                        default:
+                            output = "O comando especificado não existe.";
+                            break;
                     }
                 }
-                // Mensagem de sucesso 
-                Console.WriteLine(fileAffect + " arquivos(s) foram renomeados");
-                Console.ReadLine();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
+                catch (DirectoryNotFoundException)
+                {
+                    output = "O diretório especificado não foi encontrado.";
+                }
+                catch (FileNotFoundException)
+                {
+                    output = "Não há arquivos com o trecho ou nome especificado.";
+                }
+                catch (Exception ex)
+                {
+                    output = "Ocorreu um erro ao tentar renomear os arquivos. Erro: " + ex.Message;
+                }
+
+                Console.WriteLine(output);
             }
         }
     }
